@@ -71,9 +71,9 @@ function plot_kappa, Inst_mode_ID
     given_kappa_no_outliers = []
     for j=0, n_elements(calculated_kappa_array)-1 do begin
       ;removes kappa that are a random isolated outlier
-      if calculated_kappa_array[j] ge calculated_kappa_array[j-1]-.001 and calculated_kappa_array[j] le calculated_kappa_array[j-1]+0.001 then begin
+      if calculated_kappa_array[j] ge calculated_kappa_array[j-1]-.0001 and calculated_kappa_array[j] le calculated_kappa_array[j-1]+0.0001 then begin
         ;removes kappa that is far outside the mean, even if there are consecutive kappa outliers
-        if calculated_kappa_array[j] ge mean_kappa-(mean_kappa*5) and calculated_kappa_array[j] le mean_kappa+(mean_kappa*5) then begin
+        if calculated_kappa_array[j] ge mean_kappa-(mean_kappa*20) and calculated_kappa_array[j] le mean_kappa+(mean_kappa*5) then begin
           calculated_kappa_no_outliers = [calculated_kappa_no_outliers, calculated_kappa_array[j]]
           SIM_timestamp_no_outliers = [SIM_timestamp_no_outliers, SIM_timestamp_array[j]]
           given_kappa_no_outliers = [given_kappa_no_outliers, given_kappa_array[j]]
@@ -83,18 +83,19 @@ function plot_kappa, Inst_mode_ID
     endfor
     
     ;turns user_wl into a string so it can be used in the title
-    chosen_wl_string = strtrim(chosen_wl, 1)
+    nanimo = min(abs((*data[100]).wavelength - chosen_wl), pos_wl)
+    wl_string = strtrim((*data[100]).wavelength[pos_wl], 1)
     
     device, decompose = 0
    
-    lineplot, SIM_timestamp_array, calculated_kappa_array, ptitle = 'Given Kappa and Calculated Kappa comparison by Sorce Day at '$
-       + chosen_wl_string +'nm', xtitle = 'Sorce Day', ytitle = 'Kappa', title = 'Calculated Daily Kappa'
+    lineplot, SIM_timestamp_array, calculated_kappa_array, ptitle = 'Calculated Kappa by Sorce Day in the ' + type,$
+       xtitle = 'Sorce Day', ytitle = 'Kappa'
        
     ;should result in a plot of a horizontal line since given kappa is constant across Sorce Day
-    lineplot, SIM_timestamp_array, given_kappa_array, title = 'Given average kappa'
+   ; lineplot, SIM_timestamp_array, given_kappa_array, title = 'Given average kappa at ' + wl_string + 'nm'
 
     ;plot without outliers of calculated daily kappa
-    lineplot, SIM_timestamp_no_outliers, calculated_kappa_no_outliers, title = 'Calculated Daily Kappa without Outliers'
+    lineplot, SIM_timestamp_no_outliers, calculated_kappa_no_outliers, title = 'Calculated Daily Kappa without Outliers at ' + wl_string + 'nm'
     print, 'mean', mean_kappa
   endif
   
@@ -120,7 +121,7 @@ function plot_kappa, Inst_mode_ID
     wavelength_no_outliers = []
     for l=0, n_elements((*data[pos_SD]).wavelength)-1 do begin
       ;these coefficients may need to be adjusted depending on the graph
-      if (*daily_kappa[pos_SD]).kappa[l] ge mean_kappa*(-5.0) and (*daily_kappa[pos_SD]).kappa[l] le mean_kappa*5 then begin
+      if (*daily_kappa[pos_SD]).kappa[l] ge mean_kappa*(-10.0) and (*daily_kappa[pos_SD]).kappa[l] le mean_kappa*3 then begin
         daily_kappa_no_outliers = [daily_kappa_no_outliers, (*daily_kappa[pos_SD]).kappa[l]]
         wavelength_no_outliers = [wavelength_no_outliers, (*data[pos_SD]).wavelength[l]]
       endif  
@@ -134,11 +135,11 @@ function plot_kappa, Inst_mode_ID
     lineplot, (*data[pos_SD]).wavelength, (*daily_kappa[pos_SD]).kappa, title = 'Wavelength vs. Calculated Daily Kappa'
     
     ;given average kappa
-    lineplot, (*data[pos_SD]).wavelength, given_kappa_array, title = 'Wavelength vs. Given Average Kappa', $
+    lineplot, (*data[pos_SD]).wavelength, given_kappa_array, title = 'Wavelength vs. Given Average Kappa at SD ' + SD_string, $
       xtitle = 'Wavelength (nm)', ytitle = 'Kappa', $
-      ptitle = 'Given Average Kappa and Calculated Daily Kappa Comparison in the ' + type + ' at SD ' + SD_string   
+      ptitle = 'Given Average Kappa and Calculated Daily Kappa Comparison in the ' + type  
      
-    lineplot, wavelength_no_outliers, daily_kappa_no_outliers, title = 'Wavelength vs. Calculated Daily Kappa no Outliers'
+    lineplot, wavelength_no_outliers, daily_kappa_no_outliers, title = 'Wavelength vs. Calculated Daily Kappa no Outliers at SD: ' + SD_string
      
   endif
 
